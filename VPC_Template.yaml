@@ -1,0 +1,227 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  PublicSubnet1CIDR:
+    Description: Please enter IP range for Public subnet
+    Type: String
+    Default: 10.0.3.0/24
+  PublicSubnet2CIDR:
+    Description: Please enter IP range for Public subnet
+    Type: String
+    Default: 10.0.4.0/24
+
+  PrivateSubnet1CIDR:
+    Description: Please enter IP range for Public subnet
+    Type: String
+    Default: 10.0.5.0/24
+  PrivateSubnet2CIDR:
+    Description: Please enter IP range for Public subnet
+    Type: String
+    Default: 10.0.6.0/24
+
+  VpcCIDR:
+    Description: Please enter IP range for Public subnet
+    Type: String
+    Default: 10.0.0.0/16
+
+Resources:
+  PubPrivateVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 
+        Ref: VpcCIDR
+      Tags:
+        - Key: Name
+          Value: Zamin_VPC_CFN
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Zamin_IGW_CFN
+
+  GatewayToInternet:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: 
+        Ref: PublicSubnet1CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Public Subnet 1 (AZ1)
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: 
+        Ref: PublicSubnet2CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: Public Subnet 2 (AZ2)
+  
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: 
+        Ref: PrivateSubnet1CIDR
+      Tags:
+        - Key: Name
+          Value: Private Subnet 1 (AZ1)
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubPrivateVPC
+      AvailabilityZone: !Select [0, !GetAZs ]
+      CidrBlock: 
+        Ref: PrivateSubnet2CIDR     
+      Tags:
+        - Key: Name
+          Value: Private Subnet 2 (AZ2)
+
+  PublicRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref PubPrivateVPC      
+      Tags:
+        - Key: Name
+          Value: CFN Public RT1
+        - Key: Network
+          Value: Public1
+
+  PublicRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref PubPrivateVPC      
+      Tags:
+        - Key: Name
+          Value: CFN Public RT1
+        - Key: Network
+          Value: Public1
+
+  PublicRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref PubPrivateVPC      
+      Tags:
+        - Key: Name
+          Value: CFN Public RT2
+        - Key: Network
+          Value: Public2
+  PublicRoute1:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayToInternet
+    Properties:
+      RouteTableId: !Ref PublicRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  
+  PublicRoute2:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayToInternet
+    Properties:
+      RouteTableId: !Ref PublicRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway 
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable2
+  
+  NatGateWay1:
+    Type: AWS::EC2::NatGateway
+    DependsOn: NatPublicIP1
+    Properties:
+      AllocationId: !GetAtt NatPublicIP1.AllocationId
+      SubnetId: !Ref PublicSubnet1
+      
+  NatGateWay2:
+    Type: AWS::EC2::NatGateway
+    DependsOn: NatPublicIP2
+    Properties:
+      AllocationId: !GetAtt NatPublicIP2.AllocationId
+      SubnetId: !Ref PublicSubnet2
+
+  NatPublicIP1:
+    Type: AWS::EC2::EIP
+    DependsOn: PubPrivateVPC
+    Properties:
+      Domain: vpc
+  NatPublicIP2:
+    Type: AWS::EC2::EIP
+    DependsOn: PubPrivateVPC
+    Properties:
+      Domain: vpc 
+      
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref PubPrivateVPC      
+      Tags:
+        - Key: Name
+          Value: CFN Private RT1
+        - Key: Network
+          Value: Private
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref PubPrivateVPC      
+      Tags:
+        - Key: Name
+          Value: CFN Private RT2
+        - Key: Network
+          Value: Private2
+
+  PrivateRoute1:
+    Type: AWS::EC2::Route    
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateWay1
+  
+  PrivateRoute2:
+    Type: AWS::EC2::Route    
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateWay2
+  
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet1
+      RouteTableId: !Ref PrivateRouteTable1
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable2
+  
+
+Outputs:
+  StackRef:
+    Value: !Ref PubPrivateVPC
+    Description: Name of VPC
