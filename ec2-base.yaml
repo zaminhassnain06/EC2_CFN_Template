@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: "AWS::EC2::KeyPair::KeyName"
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.small
+    AllowedValues:
+      - t1.micro
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+  ImageId:
+    Description: EC2 Instance Image Id
+    Type: String
+    Default: ami-a4c7edb2
+  PublicInstanceNameTag:
+    Description: EC2 Instance Name Tag
+    Type: String
+    Default: SZHPublicEC2
+  PrivateInstanceNameTag:
+    Description: EC2 Instance Name Tag
+    Type: String
+    Default: SZHPrivateEC2
+
+  PublicSubnetId:
+    Description: Please enter Public subnet
+    Type: String
+    Default: "subnet-00f026548ce60a810"
+
+  PrivateSubnetId:
+    Description: Please enter Private subnet
+    Type: String
+    Default: "subnet-078a9f4d96a10a968"
+
+  PrivateSecurityGroupId:
+    Description: Please enter Private security group Id
+    Type: String
+    Default: "sg-0bc1cd754355e692a"
+
+Resources:
+  Ec2Stack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfnnestedbuktrainingzamin17062020.s3.amazonaws.com/nestedstacks/ec2instance.yaml
+      TimeoutInMinutes: "10"
+      Parameters:
+        KeyName: !Ref KeyName
+        InstanceType: !Ref InstanceType
+        ImageId: !Ref ImageId
+        PublicInstanceNameTag: !Ref PublicInstanceNameTag
+        PrivateInstanceNameTag: !Ref PrivateInstanceNameTag
+        PublicSubnetId: !Ref PublicSubnetId
+        PrivateSubnetId: !Ref PrivateSubnetId
+        PrivateSecurityGroupId: !Ref PrivateSecurityGroupId
+
+Outputs:
+  StackRef:
+    Value: !Ref Ec2Stack
+  OutputPublicFromNestedStack:
+    Value: !GetAtt Ec2Stack.Outputs.PublicStackRef
+  OutputPrivateFromNestedStack:
+    Value: !GetAtt Ec2Stack.Outputs.PrivateStackRef
