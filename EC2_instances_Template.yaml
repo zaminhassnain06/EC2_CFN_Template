@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: "AWS::EC2::KeyPair::KeyName"
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.small
+    AllowedValues:
+      - t1.micro
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+  ImageId:
+    Description: EC2 Instance Image Id
+    Type: String
+    Default: ami-a4c7edb2
+  PublicInstanceNameTag:
+    Description: EC2 Instance Name Tag
+    Type: String
+    Default: SZHPublicEC2i
+  PrivateInstanceNameTag:
+    Description: EC2 Instance Name Tag
+    Type: String
+    Default: SZHPrivateEC2i
+
+  PublicSubnetId:
+    Description: Please enter Public subnet
+    Type: String
+    Default: "subnet-00f026548ce60a810"
+
+  PrivateSubnetId:
+    Description: Please enter Private subnet
+    Type: String
+    Default: "subnet-078a9f4d96a10a968"
+
+  PrivateSecurityGroupId:
+    Description: Please enter Private security group Id
+    Type: String
+    Default: "sg-0bc1cd754355e692a"
+
+Resources:
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow http to client host
+      VpcId: "vpc-0f30ef06ca4f009c2"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: "22"
+          ToPort: "22"
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: "80"
+          ToPort: "80"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: "Sgszhtoday"
+  PublicEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType:
+        Ref: InstanceType
+      NetworkInterfaces:
+        - DeviceIndex: "0"
+          GroupSet:
+            - Ref: "InstanceSecurityGroup"
+          SubnetId:
+            Ref: PublicSubnetId
+      KeyName:
+        Ref: KeyName
+      ImageId:
+        Ref: ImageId
+      Tags:
+        - Key: Name
+          Value:
+            Ref: PublicInstanceNameTag
+  PrivateEC2Instance:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType:
+        Ref: InstanceType
+      NetworkInterfaces:
+        - DeviceIndex: "0"
+          GroupSet:
+            - Ref: "InstanceSecurityGroup"
+          SubnetId:
+            Ref: PrivateSubnetId
+      KeyName:
+        Ref: KeyName
+      ImageId:
+        Ref: ImageId
+      Tags:
+        - Key: Name
+          Value:
+            Ref: PrivateInstanceNameTag
+Outputs:
+  PublicStackRef:
+    Value: !Ref PublicEC2Instance
+    Description: Name of Public EC2 Instance
+  PrivateStackRef:
+    Value: !Ref PrivateEC2Instance
+    Description: Name of Private EC2 Instance
