@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: 2010-09-09
+Parameters:
+  PublicSubnet1CIDR:
+    Description: Please enter IP range for Public subnet
+    Type: String
+    Default: 10.0.3.0/24
+  PublicSubnet2CIDR:
+    Description: Please enter IP range for Public subnet
+    Type: String
+    Default: 10.0.4.0/24
+
+  PrivateSubnet1CIDR:
+    Description: Please enter IP range for Public subnet
+    Type: String
+    Default: 10.0.5.0/24
+  PrivateSubnet2CIDR:
+    Description: Please enter IP range for Public subnet
+    Type: String
+    Default: 10.0.6.0/24
+
+  VpcCIDR:
+    Description: Please enter IP range for Public subnet
+    Type: String
+    Default: 10.0.0.0/16
+
+Resources:
+  VpcStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://cfnnestedbuktrainingzamin17062020.s3.amazonaws.com/nestedstacks/templateVPCDay4.yaml
+      TimeoutInMinutes: "10"
+      Parameters:
+        PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
+        PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
+        PrivateSubnet1CIDR: !Ref PrivateSubnet1CIDR
+        PrivateSubnet2CIDR: !Ref PrivateSubnet2CIDR
+        VpcCIDR: !Ref VpcCIDR
+       
+
+Outputs:
+  StackRef:
+    Value: !Ref VpcStack
+  OutputFromNestedStack:
+    Value: !GetAtt VpcStack.Outputs.StackRef
